@@ -9,6 +9,15 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
+    private Texture2D _texture;
+    
+    private float _bgScrollSpeed = 1f;
+
+    private Rectangle _bgSrcRect = new Rectangle(0, 0, 288, 512);
+
+    private Vector2 _bgPos1;
+    private Vector2 _bgPos2 = new Vector2(288f, 0f);
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -18,7 +27,9 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
+        _graphics.PreferredBackBufferWidth = 288;
+        _graphics.PreferredBackBufferHeight = 512;
+        _graphics.ApplyChanges();
 
         base.Initialize();
     }
@@ -26,8 +37,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        // TODO: use this.Content to load your game content here
+        _texture = Content.Load<Texture2D>("Graphics/spritesheet");
     }
 
     protected override void Update(GameTime gameTime)
@@ -36,7 +46,14 @@ public class Game1 : Game
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        // TODO: Add your update logic here
+         _bgPos1.X -= _bgScrollSpeed;
+         if (_bgPos1.X + _bgSrcRect.Width < 0f)
+             _bgPos1.X = 0f;
+
+         var windowWidth = _graphics.PreferredBackBufferWidth;
+         _bgPos2.X -= _bgScrollSpeed;
+         if (_bgPos2.X + _bgSrcRect.Width < windowWidth)
+             _bgPos2.X = windowWidth;
 
         base.Update(gameTime);
     }
@@ -45,8 +62,17 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        // TODO: Add your drawing code here
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Draw(_texture, _bgPos1, _bgSrcRect, Color.White);
+        _spriteBatch.Draw(_texture, _bgPos2, _bgSrcRect, Color.White);
+        _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        _texture.Dispose();
+        base.Dispose(disposing);
     }
 }
