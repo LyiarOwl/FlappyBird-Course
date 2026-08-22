@@ -36,6 +36,17 @@ public class Game1 : Game
     private float _maxPipeY = 290f;
     private MathHelper.Random _rng = new MathHelper.Random();
 
+    private Rectangle _pixelSrcRect = new Rectangle(585, 449, 16, 16);
+
+    private Vector2 _birdInitialPosition;
+    private Bird _bird;
+
+    private bool _start;
+    private bool _gameOver;
+    private bool _scroll;
+
+    private int _score = 0;
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -65,20 +76,59 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _texture = Content.Load<Texture2D>("Graphics/spritesheet");
+
+        _birdInitialPosition = new Vector2(
+            _graphics.PreferredBackBufferWidth / 2f,
+            _graphics.PreferredBackBufferHeight / 2f
+        );
+        _bird = new Bird(_texture, _birdInitialPosition);
+        _bird.IsCollidingWithFloor += () =>
+        {
+            _gameOver = true;
+            _scroll = false;
+            Console.WriteLine("game over");
+        };
+        _bird.IsCollidingWithPipes += () => { _scroll = false; };
+        _bird.Scoring += () => _score++;
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-            Keyboard.GetState().IsKeyDown(Keys.Escape))
+        KeyboardExtended.Update();
+
+        if (KeyboardExtended.IsKeyDown(Keys.Escape))
             Exit();
 
-        ScrollBackground();
-        ScrollGround();
+        if (KeyboardExtended.IsKeyJustPressed(Keys.Space) && !_start)
+        {
+            _start = true;
+            _scroll = true;
+        }
 
-        HandlePipesSpawning(gameTime);
-        ScrollPipes();
-        DestroyPipesOutsideScreen();
+        if (_start)
+        {
+            if (_scroll)
+            {
+                ScrollBackground();
+                ScrollGround();
+
+                HandlePipesSpawning(gameTime);
+                ScrollPipes();
+                DestroyPipesOutsideScreen();
+            }
+
+            if (!_gameOver)
+                _bird.Update(_pipes);
+
+            if (_gameOver)
+            {
+                if (KeyboardExtended.IsKeyJustPressed(Keys.Space)) 
+                    Reset();
+            }
+            
+            Console.WriteLine(_score);
+        }
+
 
         base.Update(gameTime);
     }
@@ -158,16 +208,30 @@ public class Game1 : Game
         _spriteBatch.Draw(_texture, _bgPos2, _bgSrcRect, Color.White);
 
         foreach (var pipe in _pipes)
-            pipe.Draw(_spriteBatch);
+            pipe.Draw(_spriteBatch, _pixelSrcRect);
 
         _spriteBatch.Draw(_texture, _groundPos1, _groundSrcRect, Color.White);
         _spriteBatch.Draw(_texture, _groundPos2, _groundSrcRect, Color.White);
+
+        _bird.Draw(_spriteBatch, _pixelSrcRect);
 
         _spriteBatch.End();
 
         base.Draw(gameTime);
     }
 
+    private void Reset()
+    {
+        _bird.Reset();
+        _bird.Position = _birdInitialPosition;
+
+        _pipes.Clear();
+        _scroll = false;
+        _start = false;
+        _gameOver = false;
+        _pipesSpawnElapsed = 0f;
+        _score = 0;
+    }
     protected override void Dispose(bool disposing)
     {
         _texture.Dispose();

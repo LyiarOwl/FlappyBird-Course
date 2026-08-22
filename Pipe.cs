@@ -12,6 +12,9 @@ public class Pipe
 
     public Vector2 TopPipePosition { get; private set; }
     public Vector2 BottomPipePosition { get; private set; }
+    public Rectangle TopPipeCollider = new Rectangle(0, 0, 52, 320);
+    public Rectangle BottomPipeCollider = new Rectangle(0, 0, 52, 320);
+    public Rectangle ScoringCollider = new Rectangle(0, 0, 10, 80);
 
     public Vector2 Position
     {
@@ -25,6 +28,10 @@ public class Pipe
             TopPipePosition = new Vector2(value.X - halfPipeWidth, value.Y - pipeHeight - halfGap);
             BottomPipePosition = new Vector2(value.X - halfPipeWidth, value.Y + halfGap);
 
+            TopPipeCollider.Location = TopPipePosition.ToPoint();
+            BottomPipeCollider.Location = BottomPipePosition.ToPoint();
+            ScoringCollider.Location = value.ToPoint() - ScoringCollider.Size / 2;
+            
             _position = value;
         }
     }
@@ -37,9 +44,13 @@ public class Pipe
         Position = position;
     }
 
-    public void Draw(SpriteBatch batch)
+    public void Draw(SpriteBatch batch, Rectangle pixelSrcRect)
     {
         batch.Draw(_texture, TopPipePosition, _topPipeSrcRect, Color.White);
         batch.Draw(_texture, BottomPipePosition, _bottomPipeSrcRect, Color.White);
+        
+        batch.Draw(_texture, TopPipeCollider, pixelSrcRect, Color.Red * 0.5f);
+        batch.Draw(_texture, BottomPipeCollider, pixelSrcRect, Color.Red * 0.5f);
+        batch.Draw(_texture, ScoringCollider, pixelSrcRect, Color.Blue * 0.5f);
     }
 }
