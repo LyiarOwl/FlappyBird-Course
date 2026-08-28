@@ -28,6 +28,7 @@ public class Bird
     public event Action IsCollidingWithFloor;
     public event Action IsCollidingWithPipes;
     public event Action Scoring;
+    public event Action Jumping;
     private bool _isCollidingWithPipe;
     private bool _enteredScoringCollider;
 
@@ -42,13 +43,14 @@ public class Bird
         Velocity.Y += Gravity;
 
         HandleGroundCollision();
-        HandlePipesCollisions(pipes);       
+        HandlePipesCollisions(pipes);
 
         if (!_isCollidingWithPipe)
         {
             if (KeyboardExtended.IsKeyJustPressed(Keys.Space))
             {
                 Velocity.Y = -JumpImpulse;
+                Jumping?.Invoke();
             }
 
             bool isInsideCollider = false;
@@ -76,6 +78,7 @@ public class Bird
 
         Collider.Location = Position.ToPoint() - Collider.Size / 2;
     }
+
     private void HandleGroundCollision()
     {
         float groundY = 400f;
@@ -86,24 +89,27 @@ public class Bird
             IsCollidingWithFloor?.Invoke();
         }
     }
+
     private void HandlePipesCollisions(List<Pipe> pipes)
     {
         foreach (var pipe in pipes)
         {
             if (Collider.Intersects(pipe.BottomPipeCollider) || Collider.Intersects(pipe.TopPipeCollider))
             {
+                if (!_isCollidingWithPipe)
+                    IsCollidingWithPipes?.Invoke();
                 _isCollidingWithPipe = true;
-                IsCollidingWithPipes?.Invoke();
             }
         }
     }
+
     public void Draw(SpriteBatch batch, Rectangle pixelSrcRect)
     {
         Vector2 origin = _srcRect.Size.ToVector2() / 2f;
         batch.Draw(_texture, Position, _srcRect, Color.White, 0f,
             origin, 1f, SpriteEffects.None, 0f);
 
-        batch.Draw(_texture, Collider, pixelSrcRect, Color.HotPink * 0.5f);
+        // batch.Draw(_texture, Collider, pixelSrcRect, Color.HotPink * 0.5f);
     }
 
     public void Reset()

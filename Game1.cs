@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -41,11 +42,29 @@ public class Game1 : Game
     private Vector2 _birdInitialPosition;
     private Bird _bird;
 
+    private Rectangle _flappyBirdLogo = new Rectangle(702, 182, 178, 48);
+    private Rectangle _playBtn = new Rectangle(706, 236, 108, 66);
+    private Rectangle _gameOverLabel = new Rectangle(786, 118, 200, 52);
+
     private bool _start;
     private bool _gameOver;
     private bool _scroll;
 
     private int _score = 0;
+
+    private SpriteFont _gameFont;
+
+    private SoundEffect _dieSfx;
+    private SoundEffect _hitSfx;
+    private SoundEffect _pointSfx;
+    private SoundEffect _wingSfx;
+
+    private SoundEffectInstance _dieSfxInst;
+    private SoundEffectInstance _hitSfxInst;
+    private SoundEffectInstance _pointSfxInst;
+    private SoundEffectInstance _wingSfxInst;
+
+    private bool _collidedWithPipe;
 
     public Game1()
     {
@@ -90,6 +109,46 @@ public class Game1 : Game
         };
         _bird.IsCollidingWithPipes += () => { _scroll = false; };
         _bird.Scoring += () => _score++;
+
+        _gameFont = Content.Load<SpriteFont>("GameFont");
+
+        _dieSfx = Content.Load<SoundEffect>("Sounds/sfx_die");
+        _hitSfx = Content.Load<SoundEffect>("Sounds/sfx_hit");
+        _pointSfx = Content.Load<SoundEffect>("Sounds/sfx_point");
+        _wingSfx = Content.Load<SoundEffect>("Sounds/sfx_wing");
+
+        _dieSfxInst = _dieSfx.CreateInstance();
+        _hitSfxInst = _hitSfx.CreateInstance();
+        _pointSfxInst = _pointSfx.CreateInstance();
+        _wingSfxInst = _wingSfx.CreateInstance();
+
+        _bird.Jumping += () =>
+        {
+            _wingSfxInst.Stop();
+            _wingSfxInst.Play();
+        };
+        _bird.IsCollidingWithFloor += () =>
+        {
+            if (!_collidedWithPipe)
+            {
+                _hitSfxInst.Stop();
+                _hitSfxInst.Play();
+            }
+        };
+        _bird.IsCollidingWithPipes += () =>
+        {
+            _dieSfxInst.Stop();
+            _dieSfxInst.Play();
+            
+            _hitSfxInst.Stop();
+            _hitSfxInst.Play();
+            _collidedWithPipe = true;
+        };
+        _bird.Scoring += () =>
+        {
+            _pointSfxInst.Stop();
+            _pointSfxInst.Play();
+        };
     }
 
     protected override void Update(GameTime gameTime)
@@ -122,11 +181,9 @@ public class Game1 : Game
 
             if (_gameOver)
             {
-                if (KeyboardExtended.IsKeyJustPressed(Keys.Space)) 
+                if (KeyboardExtended.IsKeyJustPressed(Keys.Space))
                     Reset();
             }
-            
-            Console.WriteLine(_score);
         }
 
 
@@ -215,6 +272,37 @@ public class Game1 : Game
 
         _bird.Draw(_spriteBatch, _pixelSrcRect);
 
+        Vector2 center = new Vector2(_graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight) / 2f;
+        Vector2 size = _gameFont.MeasureString(_score.ToString());
+        Vector2 origin = new Vector2(size.X / 2f, 0f);
+
+        _spriteBatch.DrawString(_gameFont, _score.ToString(), new Vector2(center.X, 12f), Color.Black * 0.5f, 0f,
+            origin, 1f, SpriteEffects.None, 0f);
+
+        _spriteBatch.DrawString(_gameFont, _score.ToString(), new Vector2(center.X, 10f), Color.White, 0f, origin, 1f,
+            SpriteEffects.None, 0f);
+
+        if (!_start)
+        {
+            _spriteBatch.Draw(_texture,
+                center + new Vector2(-(_flappyBirdLogo.Width / 2f), -150f),
+                _flappyBirdLogo,
+                Color.White);
+
+            _spriteBatch.Draw(_texture,
+                center + new Vector2(-(_playBtn.Width / 2f), 100f),
+                _playBtn,
+                Color.White);
+        }
+
+        if (_gameOver)
+        {
+            _spriteBatch.Draw(_texture,
+                center - _gameOverLabel.Size.ToVector2() / 2,
+                _gameOverLabel,
+                Color.White);
+        }
+
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -231,11 +319,18 @@ public class Game1 : Game
         _gameOver = false;
         _pipesSpawnElapsed = 0f;
         _score = 0;
+        _collidedWithPipe = false;
     }
+
     protected override void Dispose(bool disposing)
     {
         _texture.Dispose();
         _spriteBatch.Dispose();
+        _gameFont.Texture.Dispose();
+        _dieSfx.Dispose();
+        _hitSfx.Dispose();
+        _pointSfx.Dispose();
+        _wingSfx.Dispose();
         base.Dispose(disposing);
     }
 }

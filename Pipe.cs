@@ -48,9 +48,9 @@ public class Pipe
     {
         batch.Draw(_texture, TopPipePosition, _topPipeSrcRect, Color.White);
         batch.Draw(_texture, BottomPipePosition, _bottomPipeSrcRect, Color.White);
-        
-        batch.Draw(_texture, TopPipeCollider, pixelSrcRect, Color.Red * 0.5f);
-        batch.Draw(_texture, BottomPipeCollider, pixelSrcRect, Color.Red * 0.5f);
-        batch.Draw(_texture, ScoringCollider, pixelSrcRect, Color.Blue * 0.5f);
+
+        // batch.Draw(_texture, TopPipeCollider, pixelSrcRect, Color.Red * 0.5f);
+        // batch.Draw(_texture, BottomPipeCollider, pixelSrcRect, Color.Red * 0.5f);
+        // batch.Draw(_texture, ScoringCollider, pixelSrcRect, Color.Blue * 0.5f);
     }
 }
