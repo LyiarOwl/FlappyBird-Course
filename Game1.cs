@@ -177,7 +177,7 @@ public class Game1 : Game
             }
 
             if (!_gameOver)
-                _bird.Update(_pipes);
+                _bird.Update(gameTime, _pipes);
 
             if (_gameOver)
             {

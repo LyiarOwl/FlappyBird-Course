@@ -32,13 +32,24 @@ public class Bird
     private bool _isCollidingWithPipe;
     private bool _enteredScoringCollider;
 
+    private Rectangle[] _frames = [
+        new Rectangle(6, 982, 34, 24),
+        new Rectangle(62, 982, 34, 24),
+        new Rectangle(118, 982, 34, 24),
+        new Rectangle(62, 982, 34, 24),
+    ];
+    private float _frameElapsed;
+    private float _frameDuration = 0.1f;
+    private int _currentFrameId;
+    private bool _updateAnim = true;
+
     public Bird(Texture2D texture, Vector2 position)
     {
         _texture = texture;
         Position = position;
     }
 
-    public void Update(List<Pipe> pipes)
+    public void Update(GameTime gameTime, List<Pipe> pipes)
     {
         Velocity.Y += Gravity;
 
@@ -74,6 +85,19 @@ public class Bird
             }
         }
 
+        if (_updateAnim)
+        {
+            float delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _frameElapsed += delta;
+            if (_frameElapsed >= _frameDuration)
+            {
+                _frameElapsed -= _frameDuration;
+                _currentFrameId++;
+                if (_currentFrameId >= _frames.Length)
+                    _currentFrameId = 0;
+            }
+        }
+
         Position += Velocity;
 
         Collider.Location = Position.ToPoint() - Collider.Size / 2;
@@ -99,6 +123,8 @@ public class Bird
                 if (!_isCollidingWithPipe)
                     IsCollidingWithPipes?.Invoke();
                 _isCollidingWithPipe = true;
+
+                _updateAnim = false;
             }
         }
     }
@@ -106,7 +132,9 @@ public class Bird
     public void Draw(SpriteBatch batch, Rectangle pixelSrcRect)
     {
         Vector2 origin = _srcRect.Size.ToVector2() / 2f;
-        batch.Draw(_texture, Position, _srcRect, Color.White, 0f,
+
+        var frame = _frames[_currentFrameId];
+        batch.Draw(_texture, Position, frame, Color.White, 0f,
             origin, 1f, SpriteEffects.None, 0f);
 
         // batch.Draw(_texture, Collider, pixelSrcRect, Color.HotPink * 0.5f);
@@ -117,5 +145,8 @@ public class Bird
         Velocity = Vector2.Zero;
         _isCollidingWithPipe = false;
         _enteredScoringCollider = false;
+        _currentFrameId = 0;
+        _frameElapsed = 0f;
+        _updateAnim = true;
     }
 }
